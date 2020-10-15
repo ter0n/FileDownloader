@@ -28,7 +28,9 @@ public class Main {
 	    //адрес файла
 //        String filePath = "https://github.com/ter0n/JSchool/blob/master/home_work9/src/com/company/Factorial.java";
 //        String filePath = "https://raw.githubusercontent.com/ter0n/JSchool/master/home_work9/src/com/company/Factorial.java";
-        String filePath = "https://introcs.cs.princeton.edu/java/data/california-gov.txt";
+//        String filePath = "https://introcs.cs.princeton.edu/java/data/california-gov.txt";
+//        String filePath = "https://introcs.cs.princeton.edu/java/data/dickens.txt";
+        String filePath = "https://introcs.cs.princeton.edu/java/data/leipzig/leipzig1m.txt";
 
         String fileName = "downloadList.txt";
         ArrayList<String> filesPath = readFileLines(fileName);
@@ -37,7 +39,13 @@ public class Main {
         }
 
         MultiThreadedFileLoader mtfl = new MultiThreadedFileLoader();
+        long startMillis, endMillis;//время начала и конца чтения байтов
+        long workTimeMillis; // оставшееся до секунды время чтения байтов
+        startMillis = System.currentTimeMillis();
         int workCode = mtfl.loadFiles(filesPath);
+        endMillis = System.currentTimeMillis();
+        workTimeMillis = endMillis - startMillis; //вычитаем из секунды время чтения байтов
+        System.out.println("All time: " + workTimeMillis);
         System.out.println(workCode);
         //переделываем строку в URL
 //        BufferedReader br;

@@ -1,3 +1,5 @@
 https://introcs.cs.princeton.edu/java/data/california-gov.txt
 https://raw.githubusercontent.com/ter0n/JSchool/master/home_work9/src/com/company/Factorial.java
 https://github.com/ter0n/JSchool/blob/master/home_work9/src/com/company/Factorial.java
+https://introcs.cs.princeton.edu/java/data/dickens.txt
+https://introcs.cs.princeton.edu/java/data/leipzig/leipzig1m.txt
