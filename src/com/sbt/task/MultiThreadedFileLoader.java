@@ -8,15 +8,32 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.SocketChannel;
 import java.util.ArrayList;
+import java.util.Stack;
+import java.util.concurrent.*;
 
 
 public class MultiThreadedFileLoader implements FileDownloader {
+
+    private ConcurrentLinkedQueue<String> concLinkedQueue;
+    private CountDownLatch threadPoolLatch;
+    private int speedLimit;
+    private int threadCount;
+
+
+    private final int bufferSize = 1024; //in bytes
+    private final int speedLimitConst = 500;
+    private final int threadCountConst = 1;
+
+    MultiThreadedFileLoader(int spdLimit, int thrdCount){
+        setThreadCount(thrdCount);
+        setSpeedLimit(spdLimit);
+    }
 
     @Override
     public int loadFiles(ArrayList<String> filesPaths) {
 
         //только один файл качаем и записываем
-        String fileName = "dickens.txt";
+        //String fileName = "dickens.txt";
 
 //        try {
 //            URL url = new URL(filesPaths.get(4));
@@ -40,12 +57,48 @@ public class MultiThreadedFileLoader implements FileDownloader {
 //            e.printStackTrace();
 //        }
 
-        int speed = 2500000 - 1024;
+        concLinkedQueue = new ConcurrentLinkedQueue<>(filesPaths);
+
+//        for (String filePath: filesPaths) {
+//            filesPathsStack.push(filePath);
+//        }
+
+        ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
+        threadPoolLatch = new CountDownLatch(threadCount);
+        for(int i = 0; i < threadCount; i++){
+            threadPool.submit(new Loader());
+        }
+
+        threadPool.shutdown();
+
+        try {
+            threadPoolLatch.await();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+//        while(concLinkedQueue.isEmpty() != true) {
+//            String filePath = concLinkedQueue.poll();
+//            try {
+//                URL url = new URL(filePath);
+//                String fileName;
+//                fileName = getFileNameFromFilePath(filePath);
+//                loadData(url, fileName);
+//            } catch (MalformedURLException e) {
+//                e.printStackTrace();
+//            }
+//        }
+
+        return 0;
+    }
+
+    private void loadData(URL fileURL, String fileName){
+        int speed = 1000000 - 1024;
         int bufferLength = 1024;
 
         try {
-            URL url = new URL(filesPaths.get(4));
-            BufferedInputStream bufferedInputStream = new BufferedInputStream(url.openStream());
+            BufferedInputStream bufferedInputStream = new BufferedInputStream(fileURL.openStream());
             FileOutputStream fileOutputStream = new FileOutputStream(fileName);
             byte buffer[] = new byte[bufferLength];
             long loadedBytesSum = 0;
@@ -71,29 +124,73 @@ public class MultiThreadedFileLoader implements FileDownloader {
                 loadedBytesSum = 0;
             }
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Проблемы с соединение по url: " + fileURL.toString() + "\n" + e.getMessage());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-
-//        try {
-//            URL url = new URL(filesPaths.get(1));
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        }
-//
-//        FileUtils
-//
-//        FileUtils.copyURLToFile(
-//                new URL(FILE__URL),
-//                new File(FILE__NAME),
-//                CONNECT_TIMEOUT,
-//                READ_TIMEOUT);
+    }
 
 
+    //сделать выброс исключения, если имя файла не найдено!!!!!!!!!!!!
+    private String getFileNameFromFilePath(String filePath){
+        int lastSlash = -1;
+        lastSlash = filePath.lastIndexOf("/");
+        String fileName = "";
+        if(lastSlash > -1) {
+            fileName = filePath.substring(lastSlash + 1, filePath.length());
+        } else {
+            System.out.println("В файле с url:\n" +
+                    filePath + "\n не найдено имя, поэтому он будет пропущен!!!");
+        }
+        return fileName;
+    }
 
-        return 0;
+    public int getSpeedLimit() {
+        return speedLimit;
+    }
+
+    public void setSpeedLimit(int speedLimit) {
+        //делаем ограничение на скорость с рассчетом минимум 2Кб на один поток
+        if (speedLimit >= threadCount * 2) {
+            if (threadCount > 0)
+                this.speedLimit = speedLimit * bufferSize / threadCount - bufferSize;
+        } else {
+            this.speedLimit = speedLimitConst;
+            System.out.println("Пользовательская скорость не подходит для данного количества потоков.\n" +
+                    "Поэтому была выставлена программная скорость:" + speedLimitConst + " * threadCount");
+        }
+    }
+
+    public void setThreadCount(int threadCount) {
+        if(threadCount > 0) {
+            this.threadCount = threadCount;
+        } else {
+            this.threadCount = threadCountConst;
+            System.out.println("Пользовательское количество потоков не подходит.\n" +
+                    "Поэтому было выставлено программное количество потоков: " + threadCountConst);
+        }
+    }
+
+    private class Loader implements Runnable{
+
+        @Override
+        public void run() {
+            while(concLinkedQueue.isEmpty() != true) {
+                String filePath = concLinkedQueue.poll();
+                try {
+                    URL url = new URL(filePath);
+                    String fileName;
+                    fileName = getFileNameFromFilePath(filePath);
+                    //проверяем, что имя файла найдено
+                    if(fileName.isEmpty() == false)
+                        loadData(url, fileName);
+                } catch (MalformedURLException e) {
+                    System.out.println("Проблемы с url: " + filePath + e.getMessage());
+                }
+            }
+            threadPoolLatch.countDown();
+        }
     }
 
 }
