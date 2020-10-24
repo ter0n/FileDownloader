@@ -2,13 +2,16 @@ package com.sbt.task;
 
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.ReadableByteChannel;
-import java.nio.channels.SocketChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Stack;
 import java.util.concurrent.*;
 
 
@@ -18,27 +21,32 @@ public class MultiThreadedFileLoader implements FileDownloader {
     private CountDownLatch threadPoolLatch;
     private int speedLimit;
     private int threadCount;
+    private String directoryName;
+    private Path dir;
 
 
     private final int bufferSize = 1024; //in bytes
     private final int speedLimitConst = 500;
     private final int threadCountConst = 1;
 
-    MultiThreadedFileLoader(int spdLimit, int thrdCount){
+    MultiThreadedFileLoader(int spdLimit, int thrdCount, String drctrName){
         setThreadCount(thrdCount);
         setSpeedLimit(spdLimit);
+        directoryName = drctrName;
     }
 
     @Override
     public int loadFiles(ArrayList<String> filesPaths) {
 
         //только один файл качаем и записываем
-        //String fileName = "dickens.txt";
 
+//        String fileName = "dickens.txt";
+//
 //        try {
-//            URL url = new URL(filesPaths.get(4));
+//            URL url = new URL(filesPaths.get(1));
 //            ReadableByteChannel readableByteChannel = Channels.newChannel(url.openStream());
-//            FileOutputStream fileOutputStream = new FileOutputStream(fileName);
+////            FileOutputStream fileOutputStream = new FileOutputStream(String.valueOf(dir.resolve(fileName)));
+//            FileOutputStream fileOutputStream = new FileOutputStream(directoryName + System.getProperty("file.separator") + fileName);
 //            FileChannel fileChannel = fileOutputStream.getChannel();
 //            long count;
 //            long startMillis, endMillis;//время начала и конца чтения байтов
@@ -50,7 +58,6 @@ public class MultiThreadedFileLoader implements FileDownloader {
 //            remainMillis = endMillis - startMillis; //вычитаем из секунды время чтения байтов
 //            System.out.println(count);
 //            System.out.println(remainMillis);
-////            fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, 2);
 //        } catch (MalformedURLException e) {
 //            e.printStackTrace();
 //        } catch (IOException e) {
@@ -58,10 +65,6 @@ public class MultiThreadedFileLoader implements FileDownloader {
 //        }
 
         concLinkedQueue = new ConcurrentLinkedQueue<>(filesPaths);
-
-//        for (String filePath: filesPaths) {
-//            filesPathsStack.push(filePath);
-//        }
 
         ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
         threadPoolLatch = new CountDownLatch(threadCount);
@@ -78,17 +81,7 @@ public class MultiThreadedFileLoader implements FileDownloader {
         }
 
 
-//        while(concLinkedQueue.isEmpty() != true) {
-//            String filePath = concLinkedQueue.poll();
-//            try {
-//                URL url = new URL(filePath);
-//                String fileName;
-//                fileName = getFileNameFromFilePath(filePath);
-//                loadData(url, fileName);
-//            } catch (MalformedURLException e) {
-//                e.printStackTrace();
-//            }
-//        }
+
 
         return 0;
     }
@@ -99,7 +92,8 @@ public class MultiThreadedFileLoader implements FileDownloader {
 
         try {
             BufferedInputStream bufferedInputStream = new BufferedInputStream(fileURL.openStream());
-            FileOutputStream fileOutputStream = new FileOutputStream(fileName);
+            String fullFileName = directoryName + System.getProperty("file.separator") + fileName;
+            FileOutputStream fileOutputStream = new FileOutputStream(fullFileName);
             byte buffer[] = new byte[bufferLength];
             long loadedBytesSum = 0;
             int bytesCountRead = 0;
@@ -120,7 +114,7 @@ public class MultiThreadedFileLoader implements FileDownloader {
 
                 if (remainMillis > 0)
                     Thread.sleep(remainMillis);
-//                System.out.println("Time: " + remainMillis + "; bytes were read: " + loadedBytesSum);
+
                 loadedBytesSum = 0;
             }
         } catch (IOException e) {
@@ -183,8 +177,11 @@ public class MultiThreadedFileLoader implements FileDownloader {
                     String fileName;
                     fileName = getFileNameFromFilePath(filePath);
                     //проверяем, что имя файла найдено
-                    if(fileName.isEmpty() == false)
+                    if(fileName.isEmpty() == false) {
+//                        fileName = directoryName + "/" + fileName;
                         loadData(url, fileName);
+                        System.out.println("Загрузка " + fileName + " закончена");
+                    }
                 } catch (MalformedURLException e) {
                     System.out.println("Проблемы с url: " + filePath + e.getMessage());
                 }

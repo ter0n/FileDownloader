@@ -2,68 +2,39 @@ package com.sbt.task;
 
 import java.io.*;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Scanner;
 
 public class Main {
 
-    public static ArrayList<String> readFileLines(String fileName){
-        ArrayList<String> fileLines = new ArrayList<>();
-        try {
-            //перенести эту строку в try(сюда!)
-            FileReader fr = new FileReader(fileName);
-            Scanner scanner = new Scanner(fr);
 
-            while(scanner.hasNextLine()){
-                fileLines.add(scanner.nextLine());
-            }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        return fileLines;
-    }
 
     public static void main(String[] args) {
 	    //адрес файла
         String fileName = "downloadList.txt";
+        String directoryName = "G://java_projects//FileDownloader//test//new";
+        String threadCount = "3";
+        String speedLimit = "2000";
 
+        String[] userArgs = {fileName, directoryName, threadCount, speedLimit};
 
+        FileDownloaderInitializer fileDownloaderInitializer = new FileDownloaderInitializer(userArgs);
 
-        ArrayList<String> filesPath = readFileLines(fileName);
-        for(String path: filesPath){
-            System.out.println(path);
-        }
-
-        int speedLimit = 3; //Kb
-        int threadCount = 3;
-
-        MultiThreadedFileLoader mtfl = new MultiThreadedFileLoader(speedLimit, threadCount);
-        long startMillis, endMillis;//время начала и конца чтения байтов
-        long workTimeMillis; // оставшееся до секунды время чтения байтов
-        startMillis = System.currentTimeMillis();
-        int workCode = mtfl.loadFiles(filesPath);
-        endMillis = System.currentTimeMillis();
-        workTimeMillis = endMillis - startMillis; //вычитаем из секунды время чтения байтов
-        System.out.println("All time: " + workTimeMillis);
-        System.out.println(workCode);
-
-
-        //переделываем строку в URL
-//        BufferedReader br;
-//        String s;
+//        File dir = new File(directoryName);
+//        dir.mkdirs();
+//        File newF = new File(dir.getPath() + System.getProperty("file.separator") + "new.txt");
+//        System.out.println(dir.getPath());
 //        try {
-//            URL filePathURL = new URL(filePath);
-//            System.out.println(filePathURL);
-//            br = new BufferedReader(new InputStreamReader(filePathURL.openConnection().getInputStream()));
-//            while((s = br.readLine())!=null){
-//                System.out.println(s);
-//            }
-//            br.close();
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
+//            newF.createNewFile();
 //        } catch (IOException e) {
 //            e.printStackTrace();
 //        }
+
     }
 }
