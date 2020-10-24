@@ -60,7 +60,7 @@ public class MultiThreadedFileLoader implements FileDownloader {
     }
 
     private void loadData(URL fileURL, String fileName){
-        int speed = 1000000 - 1024;
+
         int bufferLength = 1024;
 
         try {
@@ -75,7 +75,7 @@ public class MultiThreadedFileLoader implements FileDownloader {
             long secondInMillis = 1000;
             while( bytesCountRead != -1){
                 startMillis = System.currentTimeMillis();
-                while((bytesCountRead != -1) && (loadedBytesSum <= speed)) {
+                while((bytesCountRead != -1) && (loadedBytesSum <= speedLimit)) {
                     bytesCountRead = bufferedInputStream.read(buffer, 0, bufferLength);
                     if(bytesCountRead > 0)
                         fileOutputStream.write(buffer, 0, bytesCountRead);
