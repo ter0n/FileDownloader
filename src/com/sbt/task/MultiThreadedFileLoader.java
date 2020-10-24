@@ -38,33 +38,9 @@ public class MultiThreadedFileLoader implements FileDownloader {
     @Override
     public int loadFiles(ArrayList<String> filesPaths) {
 
-        //только один файл качаем и записываем
-
-//        String fileName = "dickens.txt";
-//
-//        try {
-//            URL url = new URL(filesPaths.get(1));
-//            ReadableByteChannel readableByteChannel = Channels.newChannel(url.openStream());
-////            FileOutputStream fileOutputStream = new FileOutputStream(String.valueOf(dir.resolve(fileName)));
-//            FileOutputStream fileOutputStream = new FileOutputStream(directoryName + System.getProperty("file.separator") + fileName);
-//            FileChannel fileChannel = fileOutputStream.getChannel();
-//            long count;
-//            long startMillis, endMillis;//время начала и конца чтения байтов
-//            long remainMillis; // оставшееся до секунды время чтения байтов
-//            long secondInMillis = 1000;
-//            startMillis = System.currentTimeMillis();
-//            count = fileOutputStream.getChannel().transferFrom(readableByteChannel, 0, Long.MAX_VALUE);
-//            endMillis = System.currentTimeMillis();
-//            remainMillis = endMillis - startMillis; //вычитаем из секунды время чтения байтов
-//            System.out.println(count);
-//            System.out.println(remainMillis);
-//        } catch (MalformedURLException e) {
-//            e.printStackTrace();
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-
         concLinkedQueue = new ConcurrentLinkedQueue<>(filesPaths);
+
+        tryCreatePath(directoryName);
 
         ExecutorService threadPool = Executors.newFixedThreadPool(threadCount);
         threadPoolLatch = new CountDownLatch(threadCount);
@@ -79,9 +55,6 @@ public class MultiThreadedFileLoader implements FileDownloader {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
-
-
 
         return 0;
     }
@@ -144,7 +117,7 @@ public class MultiThreadedFileLoader implements FileDownloader {
         return speedLimit;
     }
 
-    public void setSpeedLimit(int speedLimit) {
+    private void setSpeedLimit(int speedLimit) {
         //делаем ограничение на скорость с рассчетом минимум 2Кб на один поток
         if (speedLimit >= threadCount * 2) {
             if (threadCount > 0)
@@ -156,7 +129,7 @@ public class MultiThreadedFileLoader implements FileDownloader {
         }
     }
 
-    public void setThreadCount(int threadCount) {
+    private void setThreadCount(int threadCount) {
         if(threadCount > 0) {
             this.threadCount = threadCount;
         } else {
@@ -187,6 +160,14 @@ public class MultiThreadedFileLoader implements FileDownloader {
                 }
             }
             threadPoolLatch.countDown();
+        }
+    }
+
+    private void tryCreatePath(String path){
+
+        File dir = new File(path);
+        if(dir.exists() == false){
+            dir.mkdirs();
         }
     }
 

@@ -19,8 +19,6 @@ public class FileDownloaderInitializer {
         String directoryName = inputDataHandler.getDirectoryName();
         ArrayList<String> filesPath = inputDataHandler.getUrlList();
 
-        tryCreatePath(directoryName);
-
         FileDownloader mtfl = new MultiThreadedFileLoader(speedLimit, threadCount, directoryName);
 
         long startMillis, endMillis;//время начала и конца загрузки
@@ -49,13 +47,6 @@ public class FileDownloaderInitializer {
 
     }
 
-    private void tryCreatePath(String path){
 
-        String directoryPath;
-        File dir = new File(path);
-        if(dir.exists() == false){
-            dir.mkdirs();
-        }
-    }
 
 }
